@@ -74,8 +74,6 @@
 
 ## Архитектура
 
-Условный пайплайн:
-
 ```text
 Пользователь
    ↓
@@ -93,3 +91,126 @@ QA Chain (rag/qa_chain.py)
    • (опционально) Self-check утверждений
    ↓
 Интерфейс Gradio (app/gradio_app.py)
+
+---
+```
+
+## Структура проекта
+
+```text
+.
+├── README.md
+├── requirements.txt
+├── config.py
+├── .gitignore
+│
+├── data/
+│   ├── raw/                     # html и другие исходные данные
+│   ├── interim/                 # сырые выгрузки (CSV после парсинга)
+│   ├── processed/               # готовые чанки с метаданными
+│   └── scripts/                 # парсинг и предобработка
+│
+├── rag/
+│   ├── prompts.py               # все промпты: system, QA, compression, self-check
+│   ├── llm_backend.py           # обертка над OpenAI / локальной LLM
+│   ├── index_builder.py         # создание векторного индекса Chroma
+│   ├── retriever.py             # retriever + compression + ограничение токенов
+│   └── qa_chain.py              # финальная QA-цепочка
+│
+├── app/
+│   ├── safety.py                # фильтрация опасных запросов
+│   └── gradio_app.py            # веб-интерфейс
+│
+└── eval/
+    ├── golden_set.json          # тестовый набор вопросов-ответов из статей
+    └── hallucination_eval.md    # сценарии оценки галлюцинаций
+```
+
+---
+
+## Стек технологий
+
+* **Python 3.10+**
+* **LangChain** — RAG-пайплайн, retriever, промпты.
+* **ChromaDB** — векторное хранилище.
+* **OpenAI Embeddings** — эмбеддинги текстов (можно заменить на локальные).
+* **OpenAI ChatCompletion или локальная LLM** — генерация ответов.
+* **BeautifulSoup4** — парсинг HTML.
+* **Gradio** — веб-интерфейс.
+* **pandas / tiktoken / regex** — работа с данными и токенами.
+
+---
+
+## Установка и запуск
+
+### 1. Клонировать репозиторий
+
+```bash
+git clone https://github.com/USERNAME/cryptomentor-okx.git
+cd cryptomentor-okx
+```
+
+### 2. Установить зависимости
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Настроить переменные окружения
+
+```bash
+export OPENAI_API_KEY="your-key-here"
+```
+
+### 4. Сбор и подготовка данных
+
+1. Сохранить HTML-страницу списка статей OKX (например, `okx_index.html`) в `data/raw/`.
+2. Запустить парсер:
+
+```bash
+python data/scripts/okx_parser.py
+```
+
+Это создаст `data/interim/okx_trading_guide_raw.csv`.
+
+3. Подготовить корпус (чанки + метаданные):
+
+```bash
+python data/scripts/prepare_corpus.py
+```
+
+Результат — файлы в `data/processed/`:
+
+* `okx_trading_guide_chunks.csv`
+* `okx_trading_guide_chunks.json`
+
+### 5. Построить векторный индекс
+
+```bash
+python rag/index_builder.py
+```
+
+Будет создан Chroma-индекс (по умолчанию в папке `./chroma_db`).
+
+### 6. Запустить веб-приложение
+
+```bash
+python app/gradio_app.py
+```
+
+Интерфейс будет доступен по адресу:
+`http://localhost:7860/`.
+
+---
+
+## Направления развития
+
+```
+- добавить BM25-/keyword-ретривер для гибридного поиска;
+- расширить базу знаний за пределы beginner-guides;
+- подключить локальную русскоязычную LLM вместо/в дополнение к OpenAI;
+- реализовать автоматическую метрику галлюцинаций для golden set;
+- завернуть приложение в Docker и добавить `docker-compose.yml`.
+````
+
+https://github.com/user-attachments/assets/88c04e03-c0b7-4a10-8f6d-7bac07ab7237

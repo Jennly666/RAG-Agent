@@ -91,9 +91,9 @@ QA Chain (rag/qa_chain.py)
    • (опционально) Self-check утверждений
    ↓
 Интерфейс Gradio (app/gradio_app.py)
+```
 
 ---
-```
 
 ## Структура проекта
 
